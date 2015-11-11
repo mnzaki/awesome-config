@@ -229,6 +229,24 @@ root.buttons(awful.util.table.join(
 ))
 -- }}}
 
+function spawn(cmd, sn)
+  return function ()
+    awful.util.spawn(cmd, sn)
+  end
+end
+
+function spawn_once(cmd)
+  return function ()
+    awful.util.spawn("run_once " .. cmd)
+  end
+end
+
+function shellcmd(cmd, sn)
+  return function ()
+    awful.util.spawn_with_shell(cmd, sn)
+  end
+end
+
 -- {{{ Key bindings
 globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
@@ -263,15 +281,45 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "f", temp_tag_max_layout),
 
     -- Standard program
-    awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
-    awful.key({ modkey, "Shift"   }, "Return", function () awful.util.spawn("st -e tmux attach") end),
+    awful.key({ modkey,           }, "Return", spawn(terminal)),
+    awful.key({ modkey, "Shift"   }, "Return", spawn("st -e tmux attach")),
+
+    awful.key({                   }, "0x1008ff41", spawn("spacefm")),
+
     -- My dmenu utils
-    awful.key({ modkey,           }, "p", function () awful.util.spawn("dmenu-recent") end),
-    awful.key({ modkey,           }, "\\", function () awful.util.spawn("dmenu-supergenpass") end),
-    awful.key({ modkey,           }, "-", function () awful.util.spawn("dmenu-dict") end),
-    awful.key({ modkey,           }, "=", function () awful.util.spawn("dmenu-calc") end),
+    awful.key({ modkey,           }, "p",  spawn("dmenu-recent")),
+    awful.key({ modkey,           }, "\\", spawn("dmenu-supergenpass")),
+    awful.key({ modkey,           }, "-",  spawn("dmenu-dict")),
+    awful.key({ modkey, "Shift"   }, "-",  spawn("dmenu-dict.cc")),
+    awful.key({ modkey,           }, "=",  spawn("dmenu-calc")),
 
+    -- Media Keys
+    awful.key({                   }, "XF86AudioRaiseVolume",
+        spawn("pactl -- set-sink-volume alsa_output.pci-0000_00_1b.0.analog-stereo +10%")),
+    awful.key({                   }, "XF86AudioLowerVolume",
+        spawn("pactl -- set-sink-volume alsa_output.pci-0000_00_1b.0.analog-stereo -10%")),
 
+    -- Print Screen
+    awful.key({                   }, "Print",
+      spawn("scrot /home/mnzaki/Images/screenshots/%Y-%m-%d-%H%M%S.png")),
+    awful.key({         "Control" }, "Print",
+      spawn("import /home/mnzaki/Images/screenshots/$(date +%Y-%m-%d-%H%M%S).png")),
+
+    -- Screen sleep and lock
+    awful.key({                   }, "0x1008ff2d", nil, spawn("xset dpms force off")),
+    awful.key({                   }, "0x1008ff93", shellcmd("slock & sleep 1 && xset dpms force off")),
+
+    -- MPD
+    awful.key({                   }, "0x1008ff14", spawn("mpc toggle")),
+    awful.key({                   }, "0x1008ff15", spawn("mpc stop")),
+    awful.key({                   }, "0x1008ff17", spawn("mpc next")),
+    awful.key({                   }, "0x1008ff16", spawn("mpc prev")),
+
+    -- Kill, Suspend
+    awful.key({ modkey, "Shift"   }, "x", spawn("xkill", false)),
+    awful.key({ modkey,           }, "s", shellcmd("xsuspend $(xdotool getwindowfocus)")),
+
+    -- Restart or quit awesome
     awful.key({ modkey, "Control" }, "r", awesome.restart),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit),
 
