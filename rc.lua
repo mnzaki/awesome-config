@@ -199,7 +199,7 @@ for s = 1, screen.count() do
     mytasklist[s] = awful.widget.tasklist(s, awful.widget.tasklist.filter.currenttags, mytasklist.buttons)
 
     -- Create the wibox
-    mywibox[s] = awful.wibox({ position = "top", screen = s })
+    mywibox[s] = awful.wibox({ position = "top", height = "16", screen = s })
 
     -- Widgets that are aligned to the left
     local left_layout = wibox.layout.fixed.horizontal()
@@ -395,7 +395,8 @@ root.keys(globalkeys)
 awful.rules.rules = {
     -- All clients will match this rule.
     { rule = { },
-      properties = { border_width = beautiful.border_width,
+      properties = { size_hints_honor = false,
+                     border_width = beautiful.border_width,
                      border_color = beautiful.border_normal,
                      focus = awful.client.focus.filter,
                      raise = true,
@@ -484,4 +485,31 @@ end)
 
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
+
+-- No borders on maximized windows
+client.connect_signal("property::maximized", function(c)
+    c.border_width = c.maximized and 0 or beautiful.border_width
+end)
+
+-- Arrange signal
+for s = 1, screen.count() do screen[s]:connect_signal("arrange",
+  function ()
+    local clients = awful.client.visible(s)
+    local layout  = awful.layout.getname(awful.layout.get(s))
+
+    if #clients > 0 then -- Fine grained borders and floaters control
+      for _, c in pairs(clients) do -- Floaters always have borders
+        if awful.client.floating.get(c) or layout == "floating" then
+          c.border_width = beautiful.border_width
+
+        -- No borders with only one visible client
+        elseif #clients == 1 or layout == "max" then
+          c.border_width = 0
+        else
+          c.border_width = beautiful.border_width
+        end
+      end
+    end
+  end)
+end
 -- }}}
