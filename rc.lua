@@ -89,7 +89,6 @@ for s = 1, screen.count() do
     tag_last_layout[s] = {}
     for t = 1, 22 do
       table.insert(alltags, t)
-      table.insert(tag_last_layout[s], default_layout)
     end
     tags[s] = awful.tag(alltags, s, default_layout)
 end
@@ -262,7 +261,7 @@ globalkeys = awful.util.table.join(
                 client.focus:raise()
             end
         end),
-    awful.key({ modkey, "Control" }, "m", temp_tag_max_layout),
+    awful.key({ modkey,           }, "f", temp_tag_max_layout),
 
     -- Standard program
     awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
@@ -303,7 +302,7 @@ globalkeys = awful.util.table.join(
 )
 
 clientkeys = awful.util.table.join(
-    awful.key({ modkey,           }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
+    awful.key({ modkey, "Shift"   }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
     awful.key({ modkey, "Shift"   }, "c",      function (c) c:kill()                         end),
     awful.key({ modkey, "Control" }, "space",  awful.client.floating.toggle                     ),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
