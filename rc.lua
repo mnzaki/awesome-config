@@ -246,6 +246,14 @@ globalkeys = awful.util.table.join(
 
     -- Standard program
     awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
+    awful.key({ modkey, "Shift"   }, "Return", function () awful.util.spawn("st -e tmux attach") end),
+    -- My dmenu utils
+    awful.key({ modkey,           }, "p", function () awful.util.spawn("dmenu-recent") end),
+    awful.key({ modkey,           }, "\\", function () awful.util.spawn("dmenu-supergenpass") end),
+    awful.key({ modkey,           }, "-", function () awful.util.spawn("dmenu-dict") end),
+    awful.key({ modkey,           }, "=", function () awful.util.spawn("dmenu-calc") end),
+
+
     awful.key({ modkey, "Control" }, "r", awesome.restart),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit),
 
@@ -271,7 +279,7 @@ globalkeys = awful.util.table.join(
                   awful.util.getdir("cache") .. "/history_eval")
               end),
     -- Menubar
-    awful.key({ modkey }, "p", function() menubar.show() end)
+    awful.key({ modkey, "Shift" }, "p", function() menubar.show() end)
 )
 
 clientkeys = awful.util.table.join(
