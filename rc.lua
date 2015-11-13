@@ -266,6 +266,14 @@ function volumeCtrl(val)
   end
 end
 
+function toggleMute()
+  shellcmd("pactl -- set-sink-mute alsa_output.pci-0000_00_1b.0.analog-stereo toggle")()
+end
+
+function toggleMicMute()
+  shellcmd("pactl -- set-source-mute alsa_input.pci-0000_00_1b.0.analog-stereo toggle")()
+end
+
 -- }}}
 
 -- {{{ Key bindings
@@ -317,6 +325,8 @@ globalkeys = awful.util.table.join(
     -- Media Keys
     awful.key({                   }, "XF86AudioRaiseVolume", volumeCtrl("+5%")),
     awful.key({                   }, "XF86AudioLowerVolume", volumeCtrl("-5%")),
+    awful.key({                   }, "XF86AudioMute", toggleMute),
+    awful.key({                   }, "XF86AudioMicMute", toggleMicMute),
 
     -- Print Screen
     awful.key({                   }, "Print",
