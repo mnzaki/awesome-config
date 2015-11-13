@@ -15,12 +15,12 @@ theme.wallpaper = "/home/mnzaki/Images/Wallpapers/Simple_Arch_Linux_Colors_Wallp
 theme.font      = "Terminus bold 9"
 
 -- {{{ Colors
-theme.fg_normal  = "#DCDCDC"
-theme.fg_focus   = "#AFAFAF"
-theme.fg_urgent  = "#FFFFFF"
 theme.bg_normal  = "#000000"
+theme.fg_normal  = "#AAAAAA"
 theme.bg_focus   = "#303030"
+theme.fg_focus   = "#FFFFFF"
 theme.bg_urgent  = "#9F0000"
+theme.fg_urgent  = "#FFFFFF"
 theme.bg_systray = theme.bg_normal
 -- }}}
 
