@@ -1,3 +1,5 @@
+local io = require("io")
+
 -- Standard awesome library
 local gears = require("gears")
 local awful = require("awful")
@@ -229,6 +231,7 @@ root.buttons(awful.util.table.join(
 ))
 -- }}}
 
+-- {{{ Miscellaneous helpers for keybindings
 function spawn(cmd, sn)
   return function ()
     awful.util.spawn(cmd, sn)
@@ -246,6 +249,24 @@ function shellcmd(cmd, sn)
     awful.util.spawn_with_shell(cmd, sn)
   end
 end
+
+volnotify = {}
+volnotify.id = nil
+function volnotify:notify (msg)
+    self.id = naughty.notify({ text = msg, timeout = 1, replaces_id = self.id}).id
+end
+
+function volumeCtrl(val)
+  return function()
+    shellcmd("pactl -- set-sink-volume alsa_output.pci-0000_00_1b.0.analog-stereo " .. val)()
+    handle = io.popen("pacmd list-sinks | grep volume | head -n 1 | sed 's!.*/\\s*\\(.*%\\).*!\\1!'")
+    curvol = handle:read("*a")
+    handle:close()
+    volnotify:notify('Volume: ' .. curvol)
+  end
+end
+
+-- }}}
 
 -- {{{ Key bindings
 globalkeys = awful.util.table.join(
@@ -294,10 +315,8 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "=",  spawn("dmenu-calc")),
 
     -- Media Keys
-    awful.key({                   }, "XF86AudioRaiseVolume",
-        spawn("pactl -- set-sink-volume alsa_output.pci-0000_00_1b.0.analog-stereo +10%")),
-    awful.key({                   }, "XF86AudioLowerVolume",
-        spawn("pactl -- set-sink-volume alsa_output.pci-0000_00_1b.0.analog-stereo -10%")),
+    awful.key({                   }, "XF86AudioRaiseVolume", volumeCtrl("+5%")),
+    awful.key({                   }, "XF86AudioLowerVolume", volumeCtrl("-5%")),
 
     -- Print Screen
     awful.key({                   }, "Print",
