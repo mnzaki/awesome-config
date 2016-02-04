@@ -87,9 +87,16 @@ tag_last_layout = {}
 default_layout = layouts[2]
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    alltags = {}
+    local alltags = {}
     tag_last_layout[s] = {}
+    local t = 1
     for t = 1, 22 do
+      if t == 10 then
+        t = 0
+      end
+      if t > 10 then
+        t = "F" .. (t-10)
+      end
       table.insert(alltags, t)
     end
     tags[s] = awful.tag(alltags, s, default_layout)
