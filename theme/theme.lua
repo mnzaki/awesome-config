@@ -8,7 +8,7 @@
 
 -- {{{ Main
 theme = {}
-theme.wallpaper = "/home/mnzaki/Images/Wallpapers/Simple_Arch_Linux_Colors_Wallpapers_Ubuntronics_001_1600x900.png"
+theme.wallpaper = "/home/mnzaki/Images/Wallpapers/current_processed.png"
 -- }}}
 
 -- {{{ Styles
