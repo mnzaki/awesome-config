@@ -455,12 +455,12 @@ awful.rules.rules = {
      }
     },
 
-    -- ontop clients.
+    -- ontop sticky clients.
     { rule_any = {
         class = {
           "Xmessage",
         },
-      }, properties = { ontop = true }},
+      }, properties = { ontop = true, sticky = true }},
 
     -- Floating clients.
     { rule_any = {
