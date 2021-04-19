@@ -93,24 +93,24 @@ function volnotify:notify (msg)
 end
 
 extra.increaseVolume = function()
-  awful.util.spawn("pamixer --allow-boost -i 1")
+  awful.util.spawn("pamixer --sink 0 --allow-boost -i 1")
   extra.showVolume()
 end
 
 extra.decreaseVolume = function()
-  awful.util.spawn("pamixer --allow-boost -d 1")
+  awful.util.spawn("pamixer --sink 0 --allow-boost -d 1")
   extra.showVolume()
 end
 
 extra.showVolume = function()
-  handle = io.popen("pamixer --get-volume")
+  handle = io.popen("pamixer --sink 0 --get-volume")
   curvol = handle:read("*a")
   handle:close()
   volnotify:notify('Volume: ' .. curvol)
 end
 
 extra.toggleMute = function()
-  awful.util.spawn("pamixer -t")
+  awful.util.spawn("pamixer --sink 0 -t")
 end
 
 extra.toggleMicMute = function()
