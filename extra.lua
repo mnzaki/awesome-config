@@ -153,6 +153,8 @@ extra.globalkeys = awful.util.table.join(
     -- Print Screen
     awful.key({                   }, "Print",
       extra.spawn("scrotme")),
+    awful.key({         "Shift"   }, "Print",
+      extra.spawn("scrotme -p")),
     awful.key({         "Control" }, "Print",
       extra.spawn("import /home/mnzaki/Images/screenshots/$(date +%Y-%m-%d-%H%M%S).png")),
 
