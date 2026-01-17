@@ -14,6 +14,7 @@ local hotkeys_popup = require("awful.hotkeys_popup").widget
 local extra = {object={}}
 local modkey = "Mod4"
 
+local deficient = require("deficient")
 -- revelation: expose
 local revelation = require("revelation")
 
@@ -93,28 +94,40 @@ function volnotify:notify (msg)
 end
 
 extra.increaseVolume = function()
-  awful.util.spawn("pamixer --sink 0 --allow-boost -i 1")
+  awful.util.spawn("pamixer --allow-boost -i 1")
   extra.showVolume()
 end
 
 extra.decreaseVolume = function()
-  awful.util.spawn("pamixer --sink 0 --allow-boost -d 1")
+  awful.util.spawn("pamixer --allow-boost -d 1")
   extra.showVolume()
 end
 
+extra.increaseBrightness = function()
+  awful.util.spawn("brightnessctl s +5%")
+end
+
+extra.decreaseBrightness = function()
+  awful.util.spawn("brightnessctl s 5%-")
+end
+
+extra.setupExternalDisplay = function()
+  awful.util.spawn("external-setup")
+end
+
 extra.showVolume = function()
-  handle = io.popen("pamixer --sink 0 --get-volume")
+  handle = io.popen("pamixer --get-volume")
   curvol = handle:read("*a")
   handle:close()
   volnotify:notify('Volume: ' .. curvol)
 end
 
 extra.toggleMute = function()
-  awful.util.spawn("pamixer --sink 0 -t")
+  awful.util.spawn("pamixer -t")
 end
 
 extra.toggleMicMute = function()
-  extra.shellcmd("pactl -- set-source-mute alsa_input.pci-0000_00_1b.0.analog-stereo toggle")()
+  extra.shellcmd("pamixer --default-source default -t")()
 end
 -- }}}
 
@@ -138,6 +151,7 @@ extra.globalkeys = awful.util.table.join(
               { description = "nemo file manager" }),
 
     -- My dmenu utils
+    awful.key({ modkey,           }, "i",  extra.spawn("2ktbli")),
     awful.key({ modkey,           }, "p",  extra.spawn("dmenu-recent")),
     awful.key({ modkey,           }, "\\", extra.spawn("dmenu-supergenpass")),
     awful.key({ modkey,           }, "-",  extra.spawn("dmenu-dict")),
@@ -149,6 +163,9 @@ extra.globalkeys = awful.util.table.join(
     awful.key({                   }, "XF86AudioLowerVolume", extra.decreaseVolume),
     awful.key({                   }, "XF86AudioMute", extra.toggleMute),
     awful.key({                   }, "XF86AudioMicMute", extra.toggleMicMute),
+    awful.key({                   }, "XF86MonBrightnessUp", extra.increaseBrightness),
+    awful.key({                   }, "XF86MonBrightnessDown", extra.decreaseBrightness),
+    awful.key({                   }, "XF86Display", extra.setupExternalDisplay),
 
     -- Print Screen
     awful.key({                   }, "Print",
@@ -160,7 +177,7 @@ extra.globalkeys = awful.util.table.join(
 
     -- Screen sleep and lock
     awful.key({                   }, "0x1008ff2d", nil, extra.spawn("xset dpms force off")),
-    awful.key({                   }, "0x1008ff93", extra.shellcmd("slock & sleep 1 && xset dpms force off")),
+    awful.key({ modkey            }, "q", extra.shellcmd("slock & sleep 1 && xset dpms force off")),
 
     -- MPD
     awful.key({                   }, "0x1008ff14", extra.spawn("mpc -h boopity@localhost toggle")),
@@ -168,7 +185,7 @@ extra.globalkeys = awful.util.table.join(
     awful.key({                   }, "0x1008ff17", extra.spawn("mpc -h boopity@localhost next")),
     awful.key({                   }, "0x1008ff16", extra.spawn("mpc -h boopity@localhost prev")),
 
-    -- Kill, Suspend
+    -- Stop, Suspend
     awful.key({ modkey, "Shift"   }, "x", extra.spawn("xkill", false)),
     awful.key({ modkey, "Shift"   }, "s", extra.shellcmd("xsuspend $(xdotool getwindowfocus)")),
 
@@ -177,8 +194,23 @@ extra.globalkeys = awful.util.table.join(
 
     -- gotta go fast some times
     awful.key({ modkey,          }, ".", extra.shellcmd("switchspeed slow")),
-    awful.key({ modkey,          }, ",", extra.shellcmd("switchspeed fast"))
+    awful.key({ modkey,          }, ",", extra.shellcmd("switchspeed fast")),
 
+    -- clipster
+    awful.key({ modkey,          }, "c", extra.shellcmd("clipster -s")),
+
+    -- opacity
+    awful.key({ modkey           }, "[", function ()
+          local c = client.focus
+          local current_opacity = c.opacity or 1
+          c.opacity = math.max(0, math.min(1, current_opacity - 0.05))
+    end),
+
+    awful.key({ modkey           }, "]", function ()
+          local c = client.focus
+          local current_opacity = c.opacity or 1
+          c.opacity = math.max(0, math.min(1, current_opacity + 0.05))
+    end)
 )
 
 -- Bind all key numbers to tags.

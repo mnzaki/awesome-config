@@ -4,3 +4,6 @@
 [submodule "awesome-wm-widgets"]
 	path = awesome-wm-widgets
 	url = https://github.com/streetturtle/awesome-wm-widgets.git
+[submodule "deficient"]
+	path = deficient
+	url = https://github.com/deficient/deficient.git
