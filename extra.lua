@@ -25,8 +25,29 @@ extra.init = function(taglist_buttons)
   attention.init()
 end
 
+function get_current_activity_i()
+  local selected = awful.tag.selected(1)
+  return selected.activity_i
+end
+
+function filter_tags_for_taglist(t)
+  return awful.tag.selected(1).activity_i and awful.widget.taglist.filter.noempty(t)
+  --local is_first_of_non_empty_activity = false
+  -- FIXME too slow and borken
+  --if t.gindex % 11 == 1 then
+  --  for i = 1, 10 do
+  --    local thistag = t.screen.tags[t.gindex+i]
+  --    if awful.widget.taglist.filter.noempty(thistag) then
+  --      is_first_of_non_empty_activity = true
+  --      break
+  --    end
+  --  end
+  --end
+  -- return (notempty and in_activity) or is_first_of_non_empty_activity
+end
+
 extra.create_taglist = function(s, taglist_buttons)
-  s.mytaglist = awful.widget.taglist(s, awful.widget.taglist.filter.noempty, taglist_buttons)
+  s.mytaglist = awful.widget.taglist(s, filter_tags_for_taglist, taglist_buttons)
 end
 
 extra.create_wibox = function(s)
