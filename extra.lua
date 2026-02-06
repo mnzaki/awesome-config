@@ -18,33 +18,11 @@ local deficient = require("deficient")
 -- revelation: expose
 local revelation = require("revelation")
 
-extra.init = function()
+local attention = require("./attentive")
+
+extra.init = function(taglist_buttons)
   revelation.init()
-end
-
--- {{{ Tags
--- Define a tag table which holds all screen tags.
-extra.tags = {}
-extra.tag_last_layout = {}
-extra.default_layout = awful.layout.layouts[2]
-
-extra.create_tags = function(s)
-  -- Each screen has its own tag table.
-  local alltags = {}
-  local idx = s.index
-  extra.tag_last_layout[idx] = {}
-  local t = 1
-  for t = 1, 22 do
-    if t == 10 then
-      t = 0
-    end
-    if t > 10 then
-      t = "F" .. (t-10)
-    end
-    table.insert(alltags, t)
-  end
-  extra.tags[idx] = awful.tag(alltags, s, extra.default_layout)
-  return extra.tags[idx]
+  attention.init()
 end
 
 extra.create_taglist = function(s, taglist_buttons)
@@ -54,19 +32,6 @@ end
 extra.create_wibox = function(s)
   s.mywibox = awful.wibar({ position = "top", screen = s, height = 16 })
 end
-
-extra.temp_tag_max_layout = function()
-  local last = extra.tag_last_layout[mouse.screen][awful.tag.getidx()+1]
-  if last == nil then
-    extra.tag_last_layout[mouse.screen][awful.tag.getidx()+1] = awful.layout.get()
-    awful.layout.set(awful.layout.suit.max)
-  else
-    awful.layout.set(last)
-    extra.tag_last_layout[mouse.screen][awful.tag.getidx()+1] = nil
-  end
-end
--- }}}
-
 
 -- {{{ Miscellaneous helpers for keybindings
 extra.spawn = function(cmd, sn)
@@ -212,72 +177,6 @@ extra.globalkeys = awful.util.table.join(
           c.opacity = math.max(0, math.min(1, current_opacity + 0.05))
     end)
 )
-
--- Bind all key numbers to tags.
--- Be careful: we use keycodes to make it works on any keyboard layout.
--- This should map on the top row of your keyboard, usually 1 to 9.
-extra.tagskeys = {}
-function def_tag_keybindings(i, keycode)
-    extra.tagskeys = awful.util.table.join(
-        extra.tagskeys,
-
-        -- View tag only.
-        awful.key({ modkey }, keycode,
-                  function ()
-                        local screen = awful.screen.focused()
-                        local tag = screen.tags[i]
-                        if tag then
-                          tag:view_only()
-                        end
-                  end),
-        -- Toggle tag.
-        awful.key({ modkey, "Control" }, keycode,
-                  function ()
-                      local screen = awful.screen.focused()
-                      local tag = screen.tags[i]
-                      if tag then
-                         awful.tag.viewtoggle(tag)
-                      end
-                  end,
-                  {description = "toggle tag #" .. i, group = "tag"}),
-        -- Move client to tag.
-        awful.key({ modkey, "Shift" }, keycode,
-                  function ()
-                      if client.focus then
-                          local tag = client.focus.screen.tags[i]
-                          if tag then
-                              client.focus:move_to_tag(tag)
-                          end
-                     end
-                  end,
-                  {description = "move focused client to tag #"..i, group = "tag"}),
-        -- Toggle tag.
-        awful.key({ modkey, "Control", "Shift" }, keycode,
-                  function ()
-                      if client.focus then
-                          local tag = client.focus.screen.tags[i]
-                          if tag then
-                              client.focus:toggle_tag(tag)
-                          end
-                      end
-                  end,
-                  {description = "toggle focused client on tag #" .. i, group = "tag"})
-  )
-end
-
--- bind ALL the tags!
--- ALL the numbers
-for i = 1, 10 do
-  def_tag_keybindings(i, "#" .. i+9)
-end
--- F1 to F10
-for i = 11, 20 do
-  def_tag_keybindings(i, "#" .. i+56)
-end
--- F11 and F12
-for i = 21, 22 do
-  def_tag_keybindings(i, "#" .. i+74)
-end
 
 extra.signals = function()
   -- No borders on maximized windows
