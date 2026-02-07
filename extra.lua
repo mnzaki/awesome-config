@@ -119,14 +119,14 @@ end
 
 extra.globalkeys = awful.util.table.join(
     -- Rename a tag
----     awful.key({ modkey, }, "r",    function ()
----               awful.prompt.run({ prompt = "Rename tag: ", text = awful.tag.selected().name, },
----                   mypromptbox[mouse.screen].widget,
----                   function (s)
----                       awful.tag.selected().name = s
----                   end)
----               end),
----
+    awful.key({ modkey }, "r",    function ()
+              awful.prompt.run({ prompt = "Rename tag: ", text = awful.tag.selected().name, },
+                  mouse.screen.mypromptbox.widget,
+                  function (s)
+                      awful.tag.selected().name = s
+                  end)
+              end),
+
     -- Standard programs
     awful.key({ modkey, "Shift"   }, "Return", extra.spawn("st -e tmux attach"),
               { description = "new terminal with tmux attach" }),
