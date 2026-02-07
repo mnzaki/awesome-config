@@ -182,6 +182,16 @@ local create_tags_keys = function(s)
   )
 end
 
+local configure_global_keys = function()
+  root.keys(
+    awful.util.table.join(
+      root.keys(),
+      awful.key({ modkey, "Control" }, "Return", function () awful.spawn("activity -p") end,
+                {description = "open activity picker", group = "launcher"})
+    )
+  )
+end
+
 local temp_tag_max_layout = function()
   local last = attentive.config.tag_last_layout[""..mouse.screen][""..(awful.tag.getidx()+1)]
   if last == nil then
@@ -201,6 +211,8 @@ attentive.init = function()
       create_tags(s)
     end
   )
+
+  configure_global_keys()
 
   create_tags_keys(s)
 end
