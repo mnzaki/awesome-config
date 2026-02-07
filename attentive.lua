@@ -1,34 +1,57 @@
 local awful = require("awful")
+local json = require("vendor/json")
 
 local attentive = {object={}}
 local modkey = "Mod4"
 
--- {{{ Tags
--- Define a tag table which holds all screen tags.
+-- {{{ This object will be serialized to disk and loaded on startup
+--     So keep it JSON
+local config = {}
+config.tag_last_layout = {}
+config.activity_last_tag = {}
+config.tag_name = {}
+config.current_activity_i = 1 -- TODO compute from active tag on startup
+config.storage_json_path = os.getenv('HOME') .. '/.config/awesome/attentive.madmess.json'
+-- }}}
 
 attentive.default_layout = awful.layout.layouts[2]
-attentive.tagskeys = {}
-attentive.tag_last_layout = {}
-attentive.activity_last_tag = {}
-attentive.current_activity_i = 1 -- TODO compute from active tag on startup
+attentive.config = config
 
-attentive.create_tags = function(screen)
+local save_to_disk = function()
+  local result = json.encode(attentive.config)
+  local storage = assert(io.open(attentive.config.storage_json_path, "w"))
+  storage:write(result)
+  storage:close()
+end
+
+local load_from_disk = function()
+  local storage = io.open(attentive.config.storage_json_path, "r")
+  if storage then
+    attentive.config = awful.util.table.join(attentive.config, json.decode(storage:read("*all")))
+    storage:close()
+  end
+end
+
+local create_tags = function(screen)
   -- Each screen has its own tag table.
   -- Each tag table has 12 (activities) * 11 (space) tags
   -- first space of each activity is holy
   local alltags = {}
   local idx = screen.index
-  attentive.tag_last_layout[idx] = {}
+  attentive.config.tag_last_layout[""..idx] = {}
 
   -- Next section left 3rs on purpose
   local t = 1
   for t = 1, 12 * 11 do
-    if t % 11 == 1 then
+    if attentive.config.tag_name[""..t] then
+      t = attentive.config.tag_name[""..t]
+    elseif t % 11 == 1 then
       -- Do not worry your mind about the ceaseless petulance of mad programmers
       -- For the loop is a range, not incrementation
       t = "F" .. (t//11+1)
     else
-      t = ((t-1)//11+1) .. ": " .. (t%11 == 0 and 0 or t%11-1)
+      -- t = ((t-1)//11+1) .. ": " .. (t%11 == 0 and 0 or t%11-1)
+      t = (t%11 == 0 and 0 or t%11-1)
     end
     table.insert(alltags, t)
   end
@@ -42,16 +65,12 @@ attentive.create_tags = function(screen)
   end
 end
 
-tag.connect_signal("property::selected",
-  function()
-    local selected = awful.tag.selected(1)
-    if not selected then
-      -- TODO it got unselected, history manage
-      return
+tag.connect_signal("property::name",
+  function(t)
+    if t.gindex then
+      attentive.config.tag_name[""..t.gindex] = t.name
+      save_to_disk()
     end
-    local tagI = selected.gindex
-    -- FIXME this is full b0rked
-    -- attentive.current_activity_i = tagI/11+1
   end
 )
 
@@ -65,7 +84,7 @@ function get_it(activityOrSpace, idx, screen)
 
   local targetI
   if activityOrSpace == 'activity' then
-    targetI = attentive.activity_last_tag[idx]
+    targetI = attentive.config.activity_last_tag[""..idx]
     if targetI == nil then
       targetI = (idx-1)*11+1
     end
@@ -78,7 +97,8 @@ function get_it(activityOrSpace, idx, screen)
   return it
 end
 
-attentive.create_tags_keys = function(s)
+local tagskeys = {}
+local create_tags_keys = function(s)
   -- Bind all Fn keys to activities, which each have 11 space
   -- Bind all key numbers to space under the current activity
   --
@@ -86,8 +106,8 @@ attentive.create_tags_keys = function(s)
   -- This should map on the top row of your keyboard, usually 1 to 9.
 
   function def_tag_keybindings(activityOrSpace, idx, keycode)
-    attentive.tagskeys = awful.util.table.join(
-        attentive.tagskeys,
+    tagskeys = awful.util.table.join(
+        tagskeys,
 
         -- View tag only.
         awful.key({ modkey }, keycode,
@@ -95,11 +115,11 @@ attentive.create_tags_keys = function(s)
                         local it = get_it(activityOrSpace, idx)
                         if it.target then
                           if it.current then
-                            attentive.activity_last_tag[it.current.activity_i] = it.current.gindex
+                            attentive.config.activity_last_tag[""..it.current.activity_i] = it.current.gindex
                           end
 
                           it.target:view_only()
-                          attentive.activity_last_tag[it.target.activity_i] = it.target.gindex
+                          attentive.config.activity_last_tag[""..it.target.activity_i] = it.target.gindex
                         end
                   end),
         -- Toggle tag.
@@ -157,30 +177,32 @@ attentive.create_tags_keys = function(s)
   root.keys(
     awful.util.table.join(
       root.keys(),
-      attentive.tagskeys
+      tagskeys
     )
   )
 end
 
-attentive.temp_tag_max_layout = function()
-  local last = attentive.tag_last_layout[mouse.screen][awful.tag.getidx()+1]
+local temp_tag_max_layout = function()
+  local last = attentive.config.tag_last_layout[""..mouse.screen][""..(awful.tag.getidx()+1)]
   if last == nil then
-    attentive.tag_last_layout[mouse.screen][awful.tag.getidx()+1] = awful.layout.get()
+    attentive.config.tag_last_layout[""..mouse.screen][""..(awful.tag.getidx()+1)] = awful.layout.get()
     awful.layout.set(awful.layout.suit.max)
   else
     awful.layout.set(last)
-    attentive.tag_last_layout[mouse.screen][awful.tag.getidx()+1] = nil
+    attentive.config.tag_last_layout[""..mouse.screen][""..(awful.tag.getidx()+1)] = nil
   end
 end
 
 attentive.init = function()
+  load_from_disk()
+
   awful.screen.connect_for_each_screen(
     function(s)
-      attentive.create_tags(s)
+      create_tags(s)
     end
   )
 
-  attentive.create_tags_keys(s)
+  create_tags_keys(s)
 end
 
 return attentive
