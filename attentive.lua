@@ -11,26 +11,34 @@ config.tag_last_layout = {}
 config.activity_last_tag = {}
 config.tag_name = {}
 config.current_activity_i = 1 -- TODO compute from active tag on startup
-config.storage_json_path = os.getenv('HOME') .. '/.config/awesome/attentive.madmess.json'
+config.storage_json_path = os.getenv('HOME') .. '/.config/awesome/madmess.attentive.json'
 -- }}}
 
 attentive.default_layout = awful.layout.layouts[2]
 attentive.config = config
 
+local load_from_disk = function()
+  local storage = io.open(attentive.config.storage_json_path, "r")
+  if storage then
+    config = awful.util.table.join(attentive.config, json.decode(storage:read("*all")))
+    attentive.config = config
+    storage:close()
+  end
+end
+
 local save_to_disk = function()
+  local current_config = attentive.config
+  -- tailgate race conditions
+  load_from_disk()
+  config = awful.util.table.join(attentive.config, current_config)
+  attentive.config = config
+
   local result = json.encode(attentive.config)
   local storage = assert(io.open(attentive.config.storage_json_path, "w"))
   storage:write(result)
   storage:close()
 end
 
-local load_from_disk = function()
-  local storage = io.open(attentive.config.storage_json_path, "r")
-  if storage then
-    attentive.config = awful.util.table.join(attentive.config, json.decode(storage:read("*all")))
-    storage:close()
-  end
-end
 
 local create_tags = function(screen)
   -- Each screen has its own tag table.
@@ -186,8 +194,13 @@ local configure_global_keys = function()
   root.keys(
     awful.util.table.join(
       root.keys(),
-      awful.key({ modkey, "Control" }, "Return", function () awful.spawn("activity -p") end,
-                {description = "open activity picker", group = "launcher"})
+      awful.key({ modkey, "Control"          }, "Return",
+                  function () awful.spawn("activity -p") end,
+                {description = "open activity picker", group = "launcher"}),
+
+      awful.key({ modkey, "Shift", "Control" }, "Return",
+                  function () awful.spawn("dmenu-tmuxstart") end,
+                { description = "tmuxstart from dmenu list" })
     )
   )
 end
@@ -201,6 +214,16 @@ local temp_tag_max_layout = function()
     awful.layout.set(last)
     attentive.config.tag_last_layout[""..mouse.screen][""..(awful.tag.getidx()+1)] = nil
   end
+end
+
+local get_activity_tag_of_tag = function(t)
+  return t.screen.tags[(t.activity_i-1)*11+1]
+end
+
+attentive.get_current_activity = function()
+  local tag_name = get_activity_tag_of_tag(awful.tag.selected(1)).name
+  local activity_name = string.gsub(tag_name, ".*: ", "")
+  return activity_name
 end
 
 attentive.init = function()

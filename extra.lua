@@ -25,13 +25,13 @@ extra.init = function(taglist_buttons)
   attention.init()
 end
 
-function get_current_activity_i()
-  local selected = awful.tag.selected(1)
-  return selected.activity_i
-end
-
+local filter_noempty = awful.widget.taglist.filter.noempty
 function filter_tags_for_taglist(t)
-  return awful.tag.selected(1).activity_i and awful.widget.taglist.filter.noempty(t)
+  local in_activity = awful.tag.selected(1).activity_i == t.activity_i
+  local is_head = t.gindex % 11 == 1
+  local is_renamed_head = (t.name ~= ("F" .. t.activity_i)) and is_head
+  local is_notempty = filter_noempty(t)
+  return is_renamed_head or (is_head or in_activity) and is_notempty
   --local is_first_of_non_empty_activity = false
   -- FIXME too slow and borken
   --if t.gindex % 11 == 1 then
@@ -130,15 +130,13 @@ extra.globalkeys = awful.util.table.join(
     -- Standard programs
     awful.key({ modkey, "Shift"   }, "Return", extra.spawn("st -e tmux attach"),
               { description = "new terminal with tmux attach" }),
-    awful.key({ modkey, "Shift", "Control"   }, "Return", extra.spawn("dmenu-tmuxstart"),
-              { description = "tmuxstart from dmenu list" }),
 
-    awful.key({                   }, "0x1008ff41", extra.spawn("nemo"),
+    awful.key({                   }, "XF86Launch8", extra.spawn("nemo"),
               { description = "nemo file manager" }),
 
     -- My dmenu utils
     awful.key({ modkey,           }, "i",  extra.spawn("2ktbli")),
-    awful.key({ modkey,           }, "p",  extra.spawn("dmenu-recent")),
+    awful.key({ modkey,           }, "p",  extra.spawn("dmenu-recent 'activity run'")),
     awful.key({ modkey,           }, "\\", extra.spawn("dmenu-supergenpass")),
     awful.key({ modkey,           }, "-",  extra.spawn("dmenu-dict")),
     awful.key({ modkey, "Shift"   }, "-",  extra.spawn("dmenu-dict.cc")),
