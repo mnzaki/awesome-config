@@ -25,6 +25,9 @@ extra.init = function(taglist_buttons)
   attention.init()
 end
 
+terminal = os.getenv("TERMINAL") or "kitty"
+editor = os.getenv("EDITOR") or "vim"
+
 local filter_noempty = awful.widget.taglist.filter.noempty
 function filter_tags_for_taglist(t)
   local in_activity = awful.tag.selected(1).activity_i == t.activity_i
@@ -128,7 +131,7 @@ extra.globalkeys = awful.util.table.join(
               end),
 
     -- Standard programs
-    awful.key({ modkey, "Shift"   }, "Return", extra.spawn("st -e tmux attach"),
+    awful.key({ modkey, "Shift"   }, "Return", extra.spawn(terminal .. " -e tmux attach"),
               { description = "new terminal with tmux attach" }),
 
     awful.key({                   }, "XF86Launch8", extra.spawn("nemo"),

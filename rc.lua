@@ -53,7 +53,7 @@ end
 beautiful.init("/home/mnzaki/.config/awesome/theme/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
-terminal = "kitty"
+terminal = os.getenv("TERMINAL") or "kitty"
 editor = os.getenv("EDITOR") or "vim"
 editor_cmd = terminal .. " -e " .. editor
 
