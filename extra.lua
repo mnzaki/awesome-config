@@ -207,4 +207,41 @@ extra.signals = function()
   end)
 end
 
+-- check if ./awesomewm-vim-tmux-navigator exists
+local ok, err = pcall(require, "./awesomewm-vim-tmux-navigator")
+if ok then
+  require("./awesomewm-vim-tmux-navigator")({
+        mod = "Mod4",
+        mod_keysym = "Super_L", -- comment out to autodetect
+        up = { "Up", "k" },
+        down = { "Down", "j" },
+        left = { "Left", "h" },
+        right = { "Right", "l" },
+
+        tmux = {
+                mods = { "Alt_L" },
+                up = "k",
+                down = "j",
+                left = "h",
+                right = "l",
+        },
+
+        vim = {
+                mods = { "Control_L" },
+                up = "k",
+                down = "j",
+                left = "h",
+                right = "l",
+        },
+
+        -- focus = require("awful").client.focus.global_bydirection,
+        -- debug = print,
+
+        -- dont_restore_mods = true, -- prevent sticky mods (see troubleshooting)
+        use_pstree = true, -- detect app by using pstree instead of dynamic titles
+        use_xdotool = true, -- emulate keypresses using xdotool instead of builtin
+})
+
+end
+
 return extra
