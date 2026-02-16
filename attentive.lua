@@ -3,36 +3,33 @@ local modkey = "Mod4"
 
 
 -- {{{ Pay attention to the names of things
-local attentive = {}
+local attentive = { preserve = {} }
 
 -- {{{ This object will be serialized to disk and loaded on startup
 --     So keep it JSON-like
-local preserve = {}
-preserve.activity_prev_activity = {}
-preserve.tag_last_layout = {}
-preserve.activity_last_tag = {}
-preserve.tag_name = {}
-preserve.current_activity_i = 1 -- TODO compute from active tag on startup
+attentive.preserve.activity_prev_activity = {}
+attentive.preserve.tag_last_layout = {}
+attentive.preserve.activity_last_tag = {}
+attentive.preserve.tag_name = {}
+attentive.preserve.current_activity_i = 1 -- TODO compute from active tag on startup
 -- }}}
 
 attentive.default_layout = awful.layout.layouts[2]
-attentive.preserve = preserve
 attentive.preservation_path = os.getenv('HOME') .. '/.config/awesome/madmess.attentive.txt'
 
 local load_from_disk = function()
-    preserve = awful.util.table.join(
-      attentive.preserve,
-      attentive.codec.dec(attentive.preservation_path)
-    )
-    attentive.preserve = preserve
+  attentive.preserve = awful.util.table.join(
+    attentive.preserve,
+    attentive.codec.dec(attentive.preservation_path)
+  )
 end
 
 local save_to_disk = function()
   local current_config = attentive.preserve
+  attentive.preserve = {}
   -- tailgate race conditions
   load_from_disk()
-  preserve = awful.util.table.join(attentive.preserve, current_config)
-  attentive.preserve = preserve
+  attentive.preserve = awful.util.table.join(attentive.preserve, current_config)
 
   attentive.codec.enc(attentive.preserve, attentive.preservation_path)
 end
@@ -43,20 +40,19 @@ local create_tags = function(screen)
   -- first space of each activity is holy
   local alltags = {}
   local idx = screen.index
-  attentive.preserve.tag_last_layout[""..idx] = {}
+  attentive.preserve.tag_last_layout["" .. idx] = {}
 
   -- Next section left 3rs on purpose
-  local t = 1
   for t = 1, 12 * 11 do
-    if attentive.preserve.tag_name[""..t] then
-      t = attentive.preserve.tag_name[""..t]
+    if attentive.preserve.tag_name["" .. t] then
+      t = attentive.preserve.tag_name["" .. t]
     elseif t % 11 == 1 then
       -- Do not worry your mind about the ceaseless petulance of mad programmers
       -- For the loop is a range, not incrementation
-      t = "F" .. (t//11+1)
+      t = "F" .. (t // 11 + 1)
     else
       -- t = ((t-1)//11+1) .. ": " .. (t%11 == 0 and 0 or t%11-1)
-      t = (t%11 == 0 and 0 or t%11-1)
+      t = (t % 11 == 0 and 0 or t % 11 - 1)
     end
     table.insert(alltags, t)
   end
@@ -66,7 +62,7 @@ local create_tags = function(screen)
   for i = 1, 12 * 11 do
     local thistag = screen.tags[i]
     thistag.gindex = i
-    thistag.activity_i = math.ceil(i/11)
+    thistag.activity_i = math.ceil(i / 11)
   end
 end
 
@@ -80,12 +76,12 @@ function get_it(activityOrSpace, idx, screen)
 
   local targetI
   if activityOrSpace == 'activity' then
-    targetI = attentive.preserve.activity_last_tag[""..idx]
+    targetI = attentive.preserve.activity_last_tag["" .. idx]
     if targetI == nil then
-      targetI = (idx-1)*11+1
+      targetI = (idx - 1) * 11 + 1
     end
   else
-    targetI = (it.current.activity_i-1)*11 + idx
+    targetI = (it.current.activity_i - 1) * 11 + idx
   end
 
   it.target = screen.tags[tonumber(targetI)]
@@ -103,78 +99,78 @@ local create_tags_keys = function(s)
 
   function def_tag_keybindings(activityOrSpace, idx, keycode)
     tagskeys = awful.util.table.join(
-        tagskeys,
+      tagskeys,
 
-        -- View tag only.
-        awful.key({ modkey }, keycode,
-                  function ()
-                        local it = get_it(activityOrSpace, idx)
-                        if it.target then
-                          if it.current then
-                            attentive.preserve.activity_last_tag[""..it.current.activity_i] = it.current.gindex
-                            if it.current.activity_i ~= it.target.activity_i then
-                              -- find those whose previous activity is also the
-                              -- current, and clear them out
-                              for i = 1, 12 do
-                                local prev_of_next_i = attentive.preserve.activity_prev_activity[""..i]
-                                if tonumber(prev_of_next_i) == it.current.activity_i then
-                                  attentive.preserve.activity_prev_activity[""..i] = nil
-                                end
-                              end
+      -- View tag only.
+      awful.key({ modkey }, keycode,
+        function()
+          local it = get_it(activityOrSpace, idx)
+          if it.target then
+            if it.current then
+              attentive.preserve.activity_last_tag["" .. it.current.activity_i] = it.current.gindex
+              if it.current.activity_i ~= it.target.activity_i then
+                -- find those whose previous activity is also the
+                -- current, and clear them out
+                for i = 1, 12 do
+                  local prev_of_next_i = attentive.preserve.activity_prev_activity["" .. i]
+                  if tonumber(prev_of_next_i) == it.current.activity_i then
+                    attentive.preserve.activity_prev_activity["" .. i] = nil
+                  end
+                end
 
-                              attentive.preserve.activity_prev_activity[""..it.target.activity_i] = it.current.activity_i
-                            end
-                          end
+                attentive.preserve.activity_prev_activity["" .. it.target.activity_i] = it.current.activity_i
+              end
+            end
 
-                          attentive.preserve.activity_last_tag[""..it.target.activity_i] = it.target.gindex
+            attentive.preserve.activity_last_tag["" .. it.target.activity_i] = it.target.gindex
 
-                          save_to_disk()
+            save_to_disk()
 
-                          it.target:view_only()
-                        end
-                  end),
-        -- Toggle tag.
-        awful.key({ modkey, "Control" }, keycode,
-                  function ()
-                      local it = get_it(activityOrSpace, idx)
-                      if it.target then
-                         -- no need to manage history because unnecessary
-                         awful.tag.viewtoggle(it.target)
-                      end
-                  end,
-                  {description = "toggle space #" .. idx, group = "tag"}),
-        -- Move client to tag.
-        awful.key({ modkey, "Shift" }, keycode,
-                  function ()
-                      if client.focus then
-                          local it = get_it(activityOrSpace, idx, client.focus.screen)
-                          if it.target then
-                              client.focus:move_to_tag(it.target)
-                          end
-                     end
-                  end,
-                  {description = "move focused client to space #"..idx, group = "tag"}),
-        -- Toggle tag.
-        awful.key({ modkey, "Control", "Shift" }, keycode,
-                  function ()
-                      if client.focus then
-                          local it = get_it(activityOrSpace, idx, client.focus.screen)
-                          if it.target then
-                              client.focus:toggle_tag(it.target)
-                          end
-                      end
-                  end,
-                  {description = "toggle focused client on space #" .. idx, group = "tag"})
+            it.target:view_only()
+          end
+        end),
+      -- Toggle tag.
+      awful.key({ modkey, "Control" }, keycode,
+        function()
+          local it = get_it(activityOrSpace, idx)
+          if it.target then
+            -- no need to manage history because unnecessary
+            awful.tag.viewtoggle(it.target)
+          end
+        end,
+        { description = "toggle space #" .. idx, group = "tag" }),
+      -- Move client to tag.
+      awful.key({ modkey, "Shift" }, keycode,
+        function()
+          if client.focus then
+            local it = get_it(activityOrSpace, idx, client.focus.screen)
+            if it.target then
+              client.focus:move_to_tag(it.target)
+            end
+          end
+        end,
+        { description = "move focused client to space #" .. idx, group = "tag" }),
+      -- Toggle tag.
+      awful.key({ modkey, "Control", "Shift" }, keycode,
+        function()
+          if client.focus then
+            local it = get_it(activityOrSpace, idx, client.focus.screen)
+            if it.target then
+              client.focus:toggle_tag(it.target)
+            end
+          end
+        end,
+        { description = "toggle focused client on space #" .. idx, group = "tag" })
     )
   end
 
   -- Bind ALL the activies, F1 to F10
   for i = 11, 20 do
-    def_tag_keybindings('activity', i-10, "#" .. i+56)
+    def_tag_keybindings('activity', i - 10, "#" .. i + 56)
   end
   -- F11 and F12
   for i = 21, 22 do
-    def_tag_keybindings('activity', i-10, "#" .. i+74)
+    def_tag_keybindings('activity', i - 10, "#" .. i + 74)
   end
 
   -- Bind ALL the spaces!
@@ -182,7 +178,7 @@ local create_tags_keys = function(s)
   def_tag_keybindings('space', 1, "#49")
   -- and ALL the numbers
   for i = 1, 10 do
-    def_tag_keybindings('space', i+1, "#" .. i+9)
+    def_tag_keybindings('space', i + 1, "#" .. i + 9)
   end
 
   root.keys(
@@ -197,65 +193,64 @@ local configure_global_keys = function()
   root.keys(
     awful.util.table.join(
       root.keys(),
-      awful.key({ modkey, "Control"          }, "Return",
-                  function () awful.spawn("activity -p") end,
-                {description = "open activity picker", group = "launcher"}),
-
+      awful.key({ modkey, "Control" }, "Return",
+        function() awful.spawn("activity -p") end,
+        { description = "open activity picker", group = "launcher" }),
       awful.key({ modkey, "Shift", "Control" }, "Return",
-                  function () awful.spawn("dmenu-tmuxstart") end,
-                { description = "tmuxstart from dmenu list" }),
+        function() awful.spawn("dmenu-tmuxstart") end,
+        { description = "tmuxstart from dmenu list" }),
 
       awful.key({ modkey, "Control" }, "Escape",
-                  function ()
-                      local selected = awful.tag.selected(1)
-                      local prev_i = attentive.preserve.activity_prev_activity[""..selected.activity_i]
-                      if prev_i ~= nil then
-                        local it = get_it('activity', prev_i)
-                        if it.target then
-                          it.target:view_only()
-                        end
-                      end
-                  end,
-                  function() end,
-                { description = "Go to previous activity" }),
+        function()
+          local selected = awful.tag.selected(1)
+          local prev_i = attentive.preserve.activity_prev_activity["" .. selected.activity_i]
+          if prev_i ~= nil then
+            local it = get_it('activity', prev_i)
+            if it.target then
+              it.target:view_only()
+            end
+          end
+        end,
+        function() end,
+        { description = "Go to previous activity" }),
 
       awful.key({ "Mod1", "Control" }, "Escape",
-                  function ()
-                      local selected = awful.tag.selected(1)
-                      local next_i
-                      for i = 1, 12 do
-                        local prev_of_next_i = attentive.preserve.activity_prev_activity[""..i]
-                        if tonumber(prev_of_next_i) == selected.activity_i then
-                          next_i = i
-                          break
-                        end
-                      end
-                      if next_i ~= nil then
-                        local it = get_it('activity', next_i)
-                        if it.target then
-                          it.target:view_only()
-                        end
-                      end
-                  end,
-                  function() end,
-                { description = "Go to previous activity" })
+        function()
+          local selected = awful.tag.selected(1)
+          local next_i
+          for i = 1, 12 do
+            local prev_of_next_i = attentive.preserve.activity_prev_activity["" .. i]
+            if tonumber(prev_of_next_i) == selected.activity_i then
+              next_i = i
+              break
+            end
+          end
+          if next_i ~= nil then
+            local it = get_it('activity', next_i)
+            if it.target then
+              it.target:view_only()
+            end
+          end
+        end,
+        function() end,
+        { description = "Go to previous activity" })
     )
   )
 end
 
 local temp_tag_max_layout = function()
-  local last = attentive.preserve.tag_last_layout[""..mouse.screen][""..(awful.tag.getidx()+1)]
+  local last = attentive.preserve.tag_last_layout["" .. mouse.screen]["" .. (awful.tag.getidx() + 1)]
   if last == nil then
-    attentive.preserve.tag_last_layout[""..mouse.screen][""..(awful.tag.getidx()+1)] = awful.layout.get()
+    attentive.preserve.tag_last_layout["" .. mouse.screen]["" .. (awful.tag.getidx() + 1)] = awful.layout.get()
     awful.layout.set(awful.layout.suit.max)
   else
     awful.layout.set(last)
-    attentive.preserve.tag_last_layout[""..mouse.screen][""..(awful.tag.getidx()+1)] = nil
+    attentive.preserve.tag_last_layout["" .. mouse.screen]["" .. (awful.tag.getidx() + 1)] = nil
   end
 end
 
 local get_activity_tag_of_tag = function(t)
-  return t.screen.tags[(t.activity_i-1)*11+1]
+  return t.screen.tags[(t.activity_i - 1) * 11 + 1]
 end
 
 attentive.get_current_activity = function()
@@ -267,15 +262,15 @@ end
 tag.connect_signal("property::name",
   function(t)
     if t.gindex then
-      attentive.preserve.tag_name[""..t.gindex] = t.name
+      attentive.preserve.tag_name["" .. t.gindex] = t.name
       save_to_disk()
     end
   end
 )
 
 -- {{{ Split a string, because lua
-attentive.split_string = function (astr, sep)
-  sep = sep or "%s"  -- default to whitespace
+attentive.split_string = function(astr, sep)
+  sep = sep or "%s" -- default to whitespace
   local t = {}
   for split in string.gmatch(astr, "([^" .. sep .. "]+)") do
     table.insert(t, split)
