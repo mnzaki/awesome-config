@@ -11,7 +11,7 @@ local naughty = require("naughty")
 local menubar = require("menubar")
 local hotkeys_popup = require("awful.hotkeys_popup").widget
 
-local extra = {object={}}
+local extra = { object = {} }
 local modkey = "Mod4"
 
 local deficient = require("deficient")
@@ -59,27 +59,27 @@ end
 
 -- {{{ Miscellaneous helpers for keybindings
 extra.spawn = function(cmd, sn)
-  return function ()
+  return function()
     awful.spawn(cmd, sn)
   end
 end
 
 extra.spawn_once = function(cmd)
-  return function ()
+  return function()
     awful.util.spawn("run_once " .. cmd)
   end
 end
 
 extra.shellcmd = function(cmd, sn)
-  return function ()
+  return function()
     awful.util.spawn_with_shell(cmd, sn)
   end
 end
 
 volnotify = {}
 volnotify.id = nil
-function volnotify:notify (msg)
-    self.id = naughty.notify({ text = msg, timeout = 1, replaces_id = self.id}).id
+function volnotify:notify(msg)
+  self.id = naughty.notify({ text = msg, timeout = 1, replaces_id = self.id }).id
 end
 
 extra.increaseVolume = function()
@@ -121,127 +121,127 @@ end
 -- }}}
 
 extra.globalkeys = awful.util.table.join(
-    -- Rename a tag
-    awful.key({ modkey }, "r",    function ()
-              awful.prompt.run({ prompt = "Rename tag: ", text = awful.tag.selected().name, },
-                  mouse.screen.mypromptbox.widget,
-                  function (s)
-                      awful.tag.selected().name = s
-                  end)
-              end),
+-- Rename a tag
+  awful.key({ modkey }, "r", function()
+    awful.prompt.run({ prompt = "Rename tag: ", text = awful.tag.selected().name, },
+      mouse.screen.mypromptbox.widget,
+      function(s)
+        awful.tag.selected().name = s
+      end)
+  end),
 
-    -- Standard programs
-    awful.key({ modkey, "Shift"   }, "Return", extra.spawn(terminal .. " -e tmux attach"),
-              { description = "new terminal with tmux attach" }),
+  -- Standard programs
+  awful.key({ modkey, "Shift" }, "Return", extra.spawn(terminal .. " -e tmux attach"),
+    { description = "new terminal with tmux attach" }),
+  awful.key({}, "XF86Launch8", extra.spawn("nemo"),
+    { description = "nemo file manager" }),
 
-    awful.key({                   }, "XF86Launch8", extra.spawn("nemo"),
-              { description = "nemo file manager" }),
+  -- My dmenu utils
+  awful.key({ modkey, }, "i", extra.spawn("2ktbli")),
+  awful.key({ modkey, }, "p", extra.spawn("dmenu-recent 'activity run'")),
+  awful.key({ modkey, }, "BackSpace", extra.spawn("dmenu-supergenpass")),
+  awful.key({ modkey, }, "-", extra.spawn("dmenu-dict")),
+  awful.key({ modkey, "Shift" }, "-", extra.spawn("dmenu-dict.cc")),
+  awful.key({ modkey, }, "=", extra.spawn("dmenu-calc")),
 
-    -- My dmenu utils
-    awful.key({ modkey,           }, "i",  extra.spawn("2ktbli")),
-    awful.key({ modkey,           }, "p",  extra.spawn("dmenu-recent 'activity run'")),
-    awful.key({ modkey,           }, "\\", extra.spawn("dmenu-supergenpass")),
-    awful.key({ modkey,           }, "-",  extra.spawn("dmenu-dict")),
-    awful.key({ modkey, "Shift"   }, "-",  extra.spawn("dmenu-dict.cc")),
-    awful.key({ modkey,           }, "=",  extra.spawn("dmenu-calc")),
+  -- Media Keys
+  awful.key({}, "XF86AudioRaiseVolume", extra.increaseVolume),
+  awful.key({}, "XF86AudioLowerVolume", extra.decreaseVolume),
+  awful.key({}, "XF86AudioMute", extra.toggleMute),
+  awful.key({}, "XF86AudioMicMute", extra.toggleMicMute),
+  awful.key({}, "XF86MonBrightnessUp", extra.increaseBrightness),
+  awful.key({}, "XF86MonBrightnessDown", extra.decreaseBrightness),
+  awful.key({}, "XF86Display", extra.setupExternalDisplay),
 
-    -- Media Keys
-    awful.key({                   }, "XF86AudioRaiseVolume", extra.increaseVolume),
-    awful.key({                   }, "XF86AudioLowerVolume", extra.decreaseVolume),
-    awful.key({                   }, "XF86AudioMute", extra.toggleMute),
-    awful.key({                   }, "XF86AudioMicMute", extra.toggleMicMute),
-    awful.key({                   }, "XF86MonBrightnessUp", extra.increaseBrightness),
-    awful.key({                   }, "XF86MonBrightnessDown", extra.decreaseBrightness),
-    awful.key({                   }, "XF86Display", extra.setupExternalDisplay),
+  -- Print Screen
+  awful.key({}, "Print",
+    extra.spawn("scrotme")),
+  awful.key({ "Shift" }, "Print",
+    extra.spawn("scrotme -p")),
+  awful.key({ "Control" }, "Print",
+    extra.spawn("import /home/mnzaki/Images/screenshots/$(date +%Y-%m-%d-%H%M%S).png")),
 
-    -- Print Screen
-    awful.key({                   }, "Print",
-      extra.spawn("scrotme")),
-    awful.key({         "Shift"   }, "Print",
-      extra.spawn("scrotme -p")),
-    awful.key({         "Control" }, "Print",
-      extra.spawn("import /home/mnzaki/Images/screenshots/$(date +%Y-%m-%d-%H%M%S).png")),
+  -- Screen sleep and lock
+  awful.key({}, "0x1008ff2d", nil, extra.spawn("xset dpms force off")),
+  awful.key({ modkey }, "q", extra.shellcmd("slock & sleep 1 && xset dpms force off")),
 
-    -- Screen sleep and lock
-    awful.key({                   }, "0x1008ff2d", nil, extra.spawn("xset dpms force off")),
-    awful.key({ modkey            }, "q", extra.shellcmd("slock & sleep 1 && xset dpms force off")),
+  -- MPD
+  awful.key({}, "0x1008ff14", extra.spawn("mpc -h boopity@localhost toggle")),
+  awful.key({}, "0x1008ff15", extra.spawn("mpc -h boopity@localhost stop")),
+  awful.key({}, "0x1008ff17", extra.spawn("mpc -h boopity@localhost next")),
+  awful.key({}, "0x1008ff16", extra.spawn("mpc -h boopity@localhost prev")),
 
-    -- MPD
-    awful.key({                   }, "0x1008ff14", extra.spawn("mpc -h boopity@localhost toggle")),
-    awful.key({                   }, "0x1008ff15", extra.spawn("mpc -h boopity@localhost stop")),
-    awful.key({                   }, "0x1008ff17", extra.spawn("mpc -h boopity@localhost next")),
-    awful.key({                   }, "0x1008ff16", extra.spawn("mpc -h boopity@localhost prev")),
+  -- Stop, Suspend
+  awful.key({ modkey, "Shift" }, "x", extra.spawn("xkill", false)),
+  awful.key({ modkey, "Shift" }, "s", extra.shellcmd("xsuspend $(xdotool getwindowfocus)")),
 
-    -- Stop, Suspend
-    awful.key({ modkey, "Shift"   }, "x", extra.spawn("xkill", false)),
-    awful.key({ modkey, "Shift"   }, "s", extra.shellcmd("xsuspend $(xdotool getwindowfocus)")),
+  -- revelation
+  awful.key({ modkey, }, "e", revelation),
 
-    -- revelation
-    awful.key({ modkey,           }, "e",      revelation),
+  -- gotta go fast some times
+  awful.key({ modkey, }, ".", extra.shellcmd("switchspeed slow")),
+  awful.key({ modkey, }, ",", extra.shellcmd("switchspeed fast")),
 
-    -- gotta go fast some times
-    awful.key({ modkey,          }, ".", extra.shellcmd("switchspeed slow")),
-    awful.key({ modkey,          }, ",", extra.shellcmd("switchspeed fast")),
+  -- clipster
+  awful.key({ modkey, }, "c", extra.shellcmd("clipster -s")),
 
-    -- clipster
-    awful.key({ modkey,          }, "c", extra.shellcmd("clipster -s")),
+  -- opacity
+  awful.key({ modkey }, "[", function()
+    local c = client.focus
+    local current_opacity = c.opacity or 1
+    c.opacity = math.max(0, math.min(1, current_opacity - 0.05))
+  end),
 
-    -- opacity
-    awful.key({ modkey           }, "[", function ()
-          local c = client.focus
-          local current_opacity = c.opacity or 1
-          c.opacity = math.max(0, math.min(1, current_opacity - 0.05))
-    end),
-
-    awful.key({ modkey           }, "]", function ()
-          local c = client.focus
-          local current_opacity = c.opacity or 1
-          c.opacity = math.max(0, math.min(1, current_opacity + 0.05))
-    end)
+  awful.key({ modkey }, "]", function()
+    local c = client.focus
+    local current_opacity = c.opacity or 1
+    c.opacity = math.max(0, math.min(1, current_opacity + 0.05))
+  end)
 )
 
 extra.signals = function()
   -- No borders on maximized windows
   client.connect_signal("property::maximized", function(c)
-      c.border_width = c.maximized and 0 or beautiful.border_width
+    c.border_width = c.maximized and 0 or beautiful.border_width
   end)
 end
 
 -- check if ./awesomewm-vim-tmux-navigator exists
-local ok, err = pcall(require, "./awesomewm-vim-tmux-navigator")
+local lazy_nvim_path = os.getenv('HOME') .. '/.local/share/nvim/lazy'
+local awesomewm_vim_tmux_navigator_path = lazy_nvim_path .. '/awesomewm-vim-tmux-navigator'
+local ok, _ = pcall(require, awesomewm_vim_tmux_navigator_path)
 if ok then
-  require("./awesomewm-vim-tmux-navigator")({
-        mod = "Mod4",
-        mod_keysym = "Super_L", -- comment out to autodetect
-        up = { "Up", "k" },
-        down = { "Down", "j" },
-        left = { "Left", "h" },
-        right = { "Right", "l" },
+  require('awesomewm-vim-tmux-navigator')({
+    mod = "Mod4",
+    mod_keysym = "Super_L", -- comment out to autodetect
+    up = { "k" },
+    down = { "j" },
+    left = { "h" },
+    right = { "l" },
 
-        tmux = {
-                mods = { "Alt_L" },
-                up = "k",
-                down = "j",
-                left = "h",
-                right = "l",
-        },
+    tmux = {
+      mods = { "Alt_L" },
+      up = "k",
+      down = "j",
+      left = "h",
+      right = "l",
+    },
 
-        vim = {
-                mods = { "Control_L" },
-                up = "k",
-                down = "j",
-                left = "h",
-                right = "l",
-        },
+    vim = {
+      mods = { "Control_L" },
+      up = "k",
+      down = "j",
+      left = "h",
+      right = "l",
+    },
 
-        -- focus = require("awful").client.focus.global_bydirection,
-        -- debug = print,
+    -- focus = require("awful").client.focus.global_bydirection,
+    -- debug = print,
 
-        -- dont_restore_mods = true, -- prevent sticky mods (see troubleshooting)
-        use_pstree = true, -- detect app by using pstree instead of dynamic titles
-        use_xdotool = true, -- emulate keypresses using xdotool instead of builtin
-})
-
+    -- dont_restore_mods = true, -- prevent sticky mods (see troubleshooting)
+    use_pstree = true,  -- detect app by using pstree instead of dynamic titles
+    use_xdotool = true, -- emulate keypresses using xdotool instead of builtin
+  })
 end
 
 return extra
